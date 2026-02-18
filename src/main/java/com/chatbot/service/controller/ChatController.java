@@ -2,6 +2,9 @@ package com.chatbot.service.controller;
 
 import com.chatbot.service.dto.ChatRequest;
 import com.chatbot.service.dto.ChatResponse;
+import com.chatbot.service.dto.ContinueChatRequest;
+import com.chatbot.service.dto.SessionSummary;
+import com.chatbot.service.model.ChatMessage;
 import com.chatbot.service.model.ChatSession;
 import com.chatbot.service.services.ChatbotService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,5 +46,31 @@ public class ChatController {
     public ResponseEntity<ChatSession> getSession(@PathVariable String sessionId) {
         ChatSession session = chatbotService.getSession(sessionId);
         return ResponseEntity.ok(session);
+    }
+
+    @PostMapping("/continue")
+    @Operation(summary = "Continue an existing conversation", 
+               description = "Continue a chat session by providing sessionId and a new message. This endpoint explicitly validates the session exists.")
+    public ResponseEntity<ChatResponse> continueConversation(@Valid @RequestBody ContinueChatRequest request) {
+        ChatResponse response = chatbotService.continueConversation(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/sessions/{userId}/summaries")
+    @Operation(summary = "Get user session summaries", 
+               description = "Retrieve session summaries for a user (without full message history). Useful for listing conversations.")
+    public ResponseEntity<List<SessionSummary>> getUserSessionSummaries(@PathVariable String userId) {
+        List<SessionSummary> summaries = chatbotService.getUserSessionSummaries(userId);
+        return ResponseEntity.ok(summaries);
+    }
+
+    @GetMapping("/session/{sessionId}/history")
+    @Operation(summary = "Get session message history", 
+               description = "Retrieve message history for a session. Use limit parameter to get recent messages only.")
+    public ResponseEntity<List<ChatMessage>> getSessionHistory(
+            @PathVariable String sessionId,
+            @RequestParam(defaultValue = "0") int limit) {
+        List<ChatMessage> history = chatbotService.getSessionHistory(sessionId, limit);
+        return ResponseEntity.ok(history);
     }
 }
