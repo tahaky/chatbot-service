@@ -7,9 +7,9 @@ spring:
       database: chatbot
 
 openai:
-  api-key: ${OPENAI_API_KEY:your-api-key-here}
+  api-key: ${OPENAI_API_KEY:k-proj-6MpNLGBAq2ESvhXLNnKZ6wGlbVkcFxOGTZli_F91WEph8swgLO-BgP9MlBFMhaMPbhubDQfI4xT3BlbkFJ7OAdgVSlVXqBTkU1kMIDR9AupGvZqgEC8_7_hsW0kaCg_z32iuQgLRVZ5Dji9HIn5jMDG2CTIA}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}
-  initial-prompt: ${INITIAL_PROMPT:You are a helpful assistant. Answer questions based on the provided context.}
+  initial-prompt: ${INITIAL_PROMPT:You are a helpful assistant. Answer questions based on the provided context and use turkish. }
 
 server:
   port: 8080
