@@ -8,6 +8,9 @@ OpenAI Chatbot Integration Service built with Java 17, Spring Boot, and MongoDB.
 - ✅ MongoDB for persistent chat history storage
 - ✅ Session management with UUID-based session IDs
 - ✅ User-based conversation tracking
+- ✅ **Continue conversations with full message history** 🆕
+- ✅ **Session summaries for quick overview** 🆕
+- ✅ **Message history with pagination support** 🆕
 - ✅ Configurable initial prompts
 - ✅ Context-aware responses
 - ✅ RESTful API endpoints
@@ -123,6 +126,38 @@ Retrieve details of a specific chat session including full message history.
 ```bash
 GET /api/chat/session/{sessionId}
 ```
+
+### 4. Continue Conversation 🆕
+
+Explicitly continue an existing conversation with validation.
+
+```bash
+POST /api/chat/continue
+Content-Type: application/json
+
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Can you tell me more?"
+}
+```
+
+### 5. Get User Session Summaries 🆕
+
+Get quick overview of all user sessions without full message history.
+
+```bash
+GET /api/chat/sessions/{userId}/summaries
+```
+
+### 6. Get Session History 🆕
+
+Get message history for a session with optional pagination.
+
+```bash
+GET /api/chat/session/{sessionId}/history?limit=10
+```
+
+**For detailed examples, see [API_EXAMPLES.md](API_EXAMPLES.md)**
 
 ## Configuration
 

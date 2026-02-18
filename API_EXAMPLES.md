@@ -123,7 +123,86 @@ Response:
 }
 ```
 
-## 6. Python Example
+## 6. Continue Conversation (Explicit Method) 🆕
+
+Explicitly continue an existing conversation with validation:
+
+```bash
+curl -X POST http://localhost:8080/api/chat/continue \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+    "message": "Can you give me more details?"
+  }'
+```
+
+**Note:** This endpoint validates that the session exists. If the sessionId is invalid, it returns a 404 error instead of creating a new session.
+
+## 7. Get User Session Summaries 🆕
+
+Get a quick overview of all user sessions without full message history:
+
+```bash
+curl -X GET http://localhost:8080/api/chat/sessions/user123/summaries
+```
+
+Response:
+```json
+[
+  {
+    "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+    "userId": "user123",
+    "createdAt": "2024-02-18T10:30:00",
+    "updatedAt": "2024-02-18T10:35:00",
+    "messageCount": 4,
+    "lastMessage": "The main advantages of Spring Boot include...",
+    "lastMessageRole": "assistant"
+  },
+  {
+    "sessionId": "650e8400-e29b-41d4-a716-446655440001",
+    "userId": "user123",
+    "createdAt": "2024-02-18T09:00:00",
+    "updatedAt": "2024-02-18T09:15:00",
+    "messageCount": 6,
+    "lastMessage": "I hope that helps! Let me know if you need anything else.",
+    "lastMessageRole": "assistant"
+  }
+]
+```
+
+**Use case:** Display a list of conversations in a UI without loading full message history.
+
+## 8. Get Session Message History 🆕
+
+Get message history for a session with optional limit:
+
+```bash
+# Get all messages
+curl -X GET http://localhost:8080/api/chat/session/550e8400-e29b-41d4-a716-446655440000/history
+
+# Get only the last 10 messages
+curl -X GET "http://localhost:8080/api/chat/session/550e8400-e29b-41d4-a716-446655440000/history?limit=10"
+```
+
+Response:
+```json
+[
+  {
+    "role": "user",
+    "content": "Hello! Can you help me understand what Spring Boot is?",
+    "timestamp": "2024-02-18T10:30:00"
+  },
+  {
+    "role": "assistant",
+    "content": "Hello! Of course, I'd be happy to help...",
+    "timestamp": "2024-02-18T10:30:05"
+  }
+]
+```
+
+**Use case:** Load conversation history incrementally or paginate through messages.
+
+## 9. Python Example
 
 ```python
 import requests
@@ -161,7 +240,7 @@ history = requests.get(f"{BASE_URL}/api/chat/session/{session_id}").json()
 print(f"Total messages in session: {len(history['messages'])}")
 ```
 
-## 7. JavaScript/Node.js Example
+## 10. JavaScript/Node.js Example
 
 ```javascript
 const axios = require('axios');
@@ -198,6 +277,107 @@ async function chatWithBot() {
 }
 
 chatWithBot();
+```
+
+## 11. Advanced Python Example - Using New Features 🆕
+
+This example demonstrates using session summaries, continuing conversations, and retrieving history:
+
+```python
+import requests
+
+BASE_URL = "http://localhost:8080"
+
+def list_user_conversations(user_id):
+    """Get all conversation summaries for a user"""
+    response = requests.get(f"{BASE_URL}/api/chat/sessions/{user_id}/summaries")
+    summaries = response.json()
+    
+    print(f"\nConversations for {user_id}:")
+    for i, summary in enumerate(summaries, 1):
+        print(f"{i}. Session {summary['sessionId'][:8]}...")
+        print(f"   Messages: {summary['messageCount']}")
+        print(f"   Last: {summary['lastMessage'][:50]}...")
+        print(f"   Updated: {summary['updatedAt']}")
+    
+    return summaries
+
+def continue_conversation(session_id, message):
+    """Continue an existing conversation"""
+    response = requests.post(
+        f"{BASE_URL}/api/chat/continue",
+        json={
+            "sessionId": session_id,
+            "message": message
+        }
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data['message']
+    elif response.status_code == 404:
+        print("Error: Session not found!")
+        return None
+    else:
+        print(f"Error: {response.status_code}")
+        return None
+
+def get_recent_messages(session_id, limit=5):
+    """Get the last N messages from a session"""
+    response = requests.get(
+        f"{BASE_URL}/api/chat/session/{session_id}/history",
+        params={"limit": limit}
+    )
+    return response.json()
+
+# Example usage
+if __name__ == "__main__":
+    user_id = "user123"
+    
+    # Start a new conversation
+    print("Starting new conversation...")
+    response = requests.post(
+        f"{BASE_URL}/api/chat/send",
+        json={
+            "userId": user_id,
+            "message": "Hello! I'd like to learn about microservices."
+        }
+    )
+    session_id = response.json()["sessionId"]
+    print(f"Created session: {session_id}")
+    print(f"AI: {response.json()['message']}\n")
+    
+    # Continue the conversation using the new endpoint
+    print("Continuing conversation...")
+    ai_response = continue_conversation(
+        session_id, 
+        "What are the main benefits?"
+    )
+    print(f"AI: {ai_response}\n")
+    
+    # Add one more message
+    ai_response = continue_conversation(
+        session_id,
+        "Can you give me an example?"
+    )
+    print(f"AI: {ai_response}\n")
+    
+    # Get recent messages
+    print("Recent conversation history:")
+    recent = get_recent_messages(session_id, limit=4)
+    for msg in recent:
+        role = msg['role'].upper()
+        content = msg['content'][:80] + "..." if len(msg['content']) > 80 else msg['content']
+        print(f"{role}: {content}")
+    
+    # List all user conversations
+    print("\n" + "="*50)
+    summaries = list_user_conversations(user_id)
+    
+    # Try to continue with an invalid session (demonstrates validation)
+    print("\n" + "="*50)
+    print("Testing with invalid session ID...")
+    result = continue_conversation("invalid-session-id", "Hello")
 ```
 
 ## Health Check
