@@ -109,7 +109,7 @@ if (sessionId != null && !sessionId.isEmpty()) {
 - ✅ `testContinueConversationSessionNotFound` - Geçersiz oturum hatası
 - ✅ `testSessionSummaryTruncatesLongMessage` - Uzun mesaj kesme
 
-**Tüm testler geçti:** 8/8 ✓
+**Tüm testler geçti:** 7/7 ✓
 
 ## Güvenlik
 
