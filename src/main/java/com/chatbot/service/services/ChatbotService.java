@@ -2,6 +2,8 @@ package com.chatbot.service.services;
 
 import com.chatbot.service.dto.ChatRequest;
 import com.chatbot.service.dto.ChatResponse;
+import com.chatbot.service.exception.OpenAiException;
+import com.chatbot.service.exception.SessionNotFoundException;
 import com.chatbot.service.model.ChatMessage;
 import com.chatbot.service.model.ChatSession;
 import com.chatbot.service.repository.ChatSessionRepository;
@@ -9,6 +11,7 @@ import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatMessageRole;
 import com.theokanning.openai.service.OpenAiService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ChatbotService {
 
     private final ChatSessionRepository chatSessionRepository;
@@ -31,12 +35,6 @@ public class ChatbotService {
     
     @Value("${openai.initial-prompt}")
     private String initialPrompt;
-
-    public ChatbotService(ChatSessionRepository chatSessionRepository,
-                          @Value("${openai.api-key}") String apiKey) {
-        this.chatSessionRepository = chatSessionRepository;
-        this.openAiService = new OpenAiService(apiKey);
-    }
 
     public ChatResponse sendMessage(ChatRequest request) {
         log.info("Processing chat request for userId: {}", request.getUserId());
@@ -62,6 +60,12 @@ public class ChatbotService {
             .build();
         
         ChatCompletionResult result = openAiService.createChatCompletion(completionRequest);
+        
+        // Validate response
+        if (result.getChoices() == null || result.getChoices().isEmpty()) {
+            throw new OpenAiException("No response received from OpenAI API");
+        }
+        
         String assistantResponse = result.getChoices().get(0).getMessage().getContent();
         
         // Add assistant response to session
@@ -139,6 +143,6 @@ public class ChatbotService {
 
     public ChatSession getSession(String sessionId) {
         return chatSessionRepository.findBySessionId(sessionId)
-            .orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
+            .orElseThrow(() -> new SessionNotFoundException("Session not found: " + sessionId));
     }
 }
