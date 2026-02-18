@@ -24,21 +24,21 @@ OpenAI Chatbot Integration Service built with Java 17, Spring Boot, and MongoDB.
 
 ## Quick Start
 
-### 1. Clone the repository
+### Option 1: Quick Start Script (Recommended)
 
 ```bash
-git clone https://github.com/tahaky/chatbot-service.git
-cd chatbot-service
+# Run the quick start script
+./start.sh
 ```
 
-### 2. Set up environment variables
+The script will:
+- Check prerequisites
+- Create .env from template if needed
+- Validate configuration
+- Start all services
+- Display service URLs
 
-```bash
-cp .env.example .env
-# Edit .env and add your OpenAI API key
-```
-
-### 3. Run with Docker Compose (Recommended)
+### Option 2: Manual Start with Docker Compose
 
 ```bash
 # Set your OpenAI API key
@@ -57,7 +57,7 @@ The service will be available at:
 - API Docs: http://localhost:8080/api-docs
 - Health Check: http://localhost:8080/actuator/health
 
-### 4. Run locally (Alternative)
+### Option 3: Run Locally (Development)
 
 #### Start MongoDB
 
