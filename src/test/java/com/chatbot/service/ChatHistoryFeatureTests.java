@@ -224,6 +224,8 @@ class ChatHistoryFeatureTests {
 
         // Assert
         assertNotNull(response);
+        assertNotNull(response.getSessionId()); // Verify a session ID is returned
+        assertFalse(response.getSessionId().isEmpty()); // Verify it's not empty
         assertEquals("Hello! How can I help you?", response.getMessage());
         assertEquals("user456", response.getUserId());
         

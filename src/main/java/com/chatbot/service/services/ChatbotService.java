@@ -162,7 +162,7 @@ public class ChatbotService {
         // Try to get existing session, or create new one if userId is provided
         ChatSession session = chatSessionRepository.findBySessionId(request.getSessionId())
             .orElseGet(() -> {
-                if (request.getUserId() != null && !request.getUserId().isEmpty()) {
+                if (request.getUserId() != null && !request.getUserId().isBlank()) {
                     log.info("Session not found, creating new session for userId: {}", request.getUserId());
                     return createNewSession(request.getUserId());
                 } else {
