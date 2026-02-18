@@ -18,4 +18,7 @@ public class ContinueChatRequest {
     private String message;
     
     private String contextData;
+    
+    // Optional: If provided and session doesn't exist, a new session will be created for this user
+    private String userId;
 }

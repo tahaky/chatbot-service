@@ -50,7 +50,7 @@ public class ChatController {
 
     @PostMapping("/continue")
     @Operation(summary = "Continue an existing conversation", 
-               description = "Continue a chat session by providing sessionId and a new message. This endpoint explicitly validates the session exists.")
+               description = "Continue a chat session by providing sessionId and a new message. If the session doesn't exist and userId is provided, a new session will be created.")
     public ResponseEntity<ChatResponse> continueConversation(@Valid @RequestBody ContinueChatRequest request) {
         ChatResponse response = chatbotService.continueConversation(request);
         return ResponseEntity.ok(response);

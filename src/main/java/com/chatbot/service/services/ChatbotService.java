@@ -151,7 +151,7 @@ public class ChatbotService {
 
     /**
      * Continue an existing chat session with a new message.
-     * This method explicitly requires a valid sessionId and validates session ownership.
+     * If the session doesn't exist and userId is provided, a new session will be created.
      * 
      * @param request The continue chat request containing sessionId and message
      * @return ChatResponse with the AI's response
@@ -159,9 +159,16 @@ public class ChatbotService {
     public ChatResponse continueConversation(ContinueChatRequest request) {
         log.info("Continuing conversation for session: {}", request.getSessionId());
         
-        // Get existing session (will throw exception if not found)
+        // Try to get existing session, or create new one if userId is provided
         ChatSession session = chatSessionRepository.findBySessionId(request.getSessionId())
-            .orElseThrow(() -> new SessionNotFoundException("Session not found: " + request.getSessionId()));
+            .orElseGet(() -> {
+                if (request.getUserId() != null && !request.getUserId().isEmpty()) {
+                    log.info("Session not found, creating new session for userId: {}", request.getUserId());
+                    return createNewSession(request.getUserId());
+                } else {
+                    throw new SessionNotFoundException("Session not found: " + request.getSessionId());
+                }
+            });
         
         // Add user message to session
         ChatMessage userMessage = new ChatMessage(
