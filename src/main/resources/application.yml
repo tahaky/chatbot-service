@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: chatbot-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/chatbot}
+      database: chatbot
+
+openai:
+  api-key: ${OPENAI_API_KEY:your-api-key-here}
+  model: ${OPENAI_MODEL:gpt-3.5-turbo}
+  initial-prompt: ${INITIAL_PROMPT:You are a helpful assistant. Answer questions based on the provided context.}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
