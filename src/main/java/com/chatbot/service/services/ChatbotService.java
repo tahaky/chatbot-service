@@ -4,6 +4,8 @@ import com.chatbot.service.dto.ChatRequest;
 import com.chatbot.service.dto.ChatResponse;
 import com.chatbot.service.dto.ContinueChatRequest;
 import com.chatbot.service.dto.SessionSummary;
+import com.chatbot.service.dto.forum.ForumMessageResponse;
+import com.chatbot.service.dto.forum.ForumSubthreadResponse;
 import com.chatbot.service.exception.OpenAiException;
 import com.chatbot.service.exception.SessionNotFoundException;
 import com.chatbot.service.model.ChatMessage;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +34,7 @@ public class ChatbotService {
 
     private final ChatSessionRepository chatSessionRepository;
     private final OpenAiService openAiService;
+    private final ForumServiceClient forumServiceClient;
     
     @Value("${openai.model}")
     private String model;
@@ -43,6 +47,14 @@ public class ChatbotService {
         
         // Get or create session
         ChatSession session = getOrCreateSession(request.getUserId(), request.getSessionId());
+
+        // When creating a new session, enrich the initial prompt with forum context if subthreadId is provided
+        if (request.getSessionId() == null || request.getSessionId().isEmpty()) {
+            if (request.getSubthreadId() != null && !request.getSubthreadId().isEmpty()) {
+                String forumContext = buildForumContext(request.getSubthreadId(), request.getThreadId());
+                session.setInitialPrompt(session.getInitialPrompt() + "\n\n" + forumContext);
+            }
+        }
         
         // Add user message to session
         ChatMessage userMessage = new ChatMessage(
@@ -279,5 +291,47 @@ public class ChatbotService {
         }
         
         return summary;
+    }
+
+    /**
+     * Builds a forum context string from the subthread's initial message and its voted messages.
+     * Fetches data from the forum service using the provided subthreadId (and optionally threadId).
+     *
+     * @param subthreadId the forum subthread ID
+     * @param threadId    optional thread ID; when provided, the subthread's initialMessage is included
+     * @return formatted context string to prepend to the session's initial prompt
+     */
+    public String buildForumContext(String subthreadId, String threadId) {
+        StringBuilder context = new StringBuilder("Forum discussion context:\n");
+
+        // Fetch the subthread's initialMessage if threadId is available
+        if (threadId != null && !threadId.isEmpty()) {
+            List<ForumSubthreadResponse> subthreads = forumServiceClient.getSubthreadsByThread(threadId);
+            subthreads.stream()
+                .filter(s -> subthreadId.equals(s.getId()))
+                .findFirst()
+                .ifPresent(s -> {
+                    if (s.getInitialMessage() != null && !s.getInitialMessage().isEmpty()) {
+                        context.append("Initial message: ").append(s.getInitialMessage()).append("\n");
+                    }
+                });
+        }
+
+        // Fetch messages and include upvoted ones as context
+        List<ForumMessageResponse> messages = forumServiceClient.getSubthreadMessages(subthreadId);
+        List<ForumMessageResponse> votedMessages = messages.stream()
+            .filter(m -> !m.isDeleted() && m.getUpvoteCount() > 0)
+            .sorted(Comparator.comparingInt(ForumMessageResponse::getUpvoteCount).reversed())
+            .collect(Collectors.toList());
+
+        if (!votedMessages.isEmpty()) {
+            context.append("Top voted messages:\n");
+            votedMessages.forEach(m ->
+                context.append("- ").append(m.getBody())
+                    .append(" (upvotes: ").append(m.getUpvoteCount()).append(")\n")
+            );
+        }
+
+        return context.toString();
     }
 }

@@ -20,4 +20,8 @@ public class ChatRequest {
     private String sessionId;
     
     private String contextData;
+
+    private String subthreadId;
+
+    private String threadId;
 }
