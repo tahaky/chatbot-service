@@ -125,7 +125,7 @@ Response:
 
 ## 6. Continue Conversation (Explicit Method) 🆕
 
-Explicitly continue an existing conversation with validation:
+Explicitly continue an existing conversation:
 
 ```bash
 curl -X POST http://localhost:8080/api/chat/continue \
@@ -136,7 +136,19 @@ curl -X POST http://localhost:8080/api/chat/continue \
   }'
 ```
 
-**Note:** This endpoint validates that the session exists. If the sessionId is invalid, it returns a 404 error instead of creating a new session.
+**Note:** If the session doesn't exist and you provide a `userId`, a new session will be created:
+
+```bash
+curl -X POST http://localhost:8080/api/chat/continue \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "non-existent-session-id",
+    "message": "Hello!",
+    "userId": "user123"
+  }'
+```
+
+If the sessionId is invalid and no userId is provided, it returns a 404 error.
 
 ## 7. Get User Session Summaries 🆕
 
@@ -302,14 +314,18 @@ def list_user_conversations(user_id):
     
     return summaries
 
-def continue_conversation(session_id, message):
-    """Continue an existing conversation"""
+def continue_conversation(session_id, message, user_id=None):
+    """Continue an existing conversation. Creates new session if userId is provided and session doesn't exist."""
+    payload = {
+        "sessionId": session_id,
+        "message": message
+    }
+    if user_id:
+        payload["userId"] = user_id
+    
     response = requests.post(
         f"{BASE_URL}/api/chat/continue",
-        json={
-            "sessionId": session_id,
-            "message": message
-        }
+        json=payload
     )
     
     if response.status_code == 200:
@@ -376,8 +392,15 @@ if __name__ == "__main__":
     
     # Try to continue with an invalid session (demonstrates validation)
     print("\n" + "="*50)
-    print("Testing with invalid session ID...")
+    print("Testing with invalid session ID (no userId)...")
     result = continue_conversation("invalid-session-id", "Hello")
+    
+    # Try to continue with an invalid session but with userId (auto-creates session)
+    print("\n" + "="*50)
+    print("Testing with invalid session ID (with userId - auto-creates)...")
+    result = continue_conversation("another-invalid-session", "Hello, I want to start fresh!", user_id=user_id)
+    if result:
+        print(f"AI (new session): {result}")
 ```
 
 ## Health Check

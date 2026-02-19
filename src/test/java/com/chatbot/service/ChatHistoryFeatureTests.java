@@ -180,10 +180,58 @@ class ChatHistoryFeatureTests {
         ContinueChatRequest request = new ContinueChatRequest();
         request.setSessionId("invalid-session");
         request.setMessage("Hello");
+        // No userId provided, should throw exception
         
         assertThrows(SessionNotFoundException.class, () -> {
             chatbotService.continueConversation(request);
         });
+    }
+
+    @Test
+    void testContinueConversationCreatesNewSessionWhenNotFoundWithUserId() {
+        // Arrange
+        when(chatSessionRepository.findBySessionId("non-existent-session"))
+            .thenReturn(Optional.empty());
+        
+        ChatSession newSession = new ChatSession();
+        newSession.setSessionId("new-session-123");
+        newSession.setUserId("user456");
+        newSession.setMessages(new ArrayList<>());
+        newSession.setInitialPrompt("You are a helpful assistant.");
+        newSession.setCreatedAt(LocalDateTime.now());
+        newSession.setUpdatedAt(LocalDateTime.now());
+        
+        when(chatSessionRepository.save(any(ChatSession.class))).thenReturn(newSession);
+        
+        // Mock OpenAI response
+        ChatCompletionResult mockResult = mock(ChatCompletionResult.class);
+        ChatCompletionChoice mockChoice = mock(ChatCompletionChoice.class);
+        com.theokanning.openai.completion.chat.ChatMessage mockMessage = 
+            new com.theokanning.openai.completion.chat.ChatMessage();
+        mockMessage.setContent("Hello! How can I help you?");
+        
+        when(mockChoice.getMessage()).thenReturn(mockMessage);
+        when(mockResult.getChoices()).thenReturn(Arrays.asList(mockChoice));
+        when(openAiService.createChatCompletion(any())).thenReturn(mockResult);
+
+        // Act
+        ContinueChatRequest request = new ContinueChatRequest();
+        request.setSessionId("non-existent-session");
+        request.setMessage("Hello");
+        request.setUserId("user456");
+        
+        var response = chatbotService.continueConversation(request);
+
+        // Assert
+        assertNotNull(response);
+        assertNotNull(response.getSessionId()); // Verify a session ID is returned
+        assertFalse(response.getSessionId().isEmpty()); // Verify it's not empty
+        assertEquals("Hello! How can I help you?", response.getMessage());
+        assertEquals("user456", response.getUserId());
+        
+        verify(chatSessionRepository).findBySessionId("non-existent-session");
+        verify(chatSessionRepository).save(any(ChatSession.class));
+        verify(openAiService).createChatCompletion(any());
     }
 
     @Test
