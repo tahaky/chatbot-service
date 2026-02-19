@@ -10,6 +10,7 @@ import com.chatbot.service.services.ChatbotService;
 import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.service.OpenAiService;
+import com.chatbot.service.services.ForumServiceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -31,7 +32,8 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 @TestPropertySource(properties = {
     "openai.api-key=test-key",
-    "spring.data.mongodb.uri=mongodb://localhost:27017/test"
+    "spring.data.mongodb.uri=mongodb://localhost:27017/test",
+    "forum.service.base-url=http://localhost:9999"
 })
 class ChatHistoryFeatureTests {
 
@@ -43,6 +45,9 @@ class ChatHistoryFeatureTests {
 
     @MockBean
     private OpenAiService openAiService;
+
+    @MockBean
+    private ForumServiceClient forumServiceClient;
 
     private ChatSession testSession;
 

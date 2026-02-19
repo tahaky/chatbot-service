@@ -7,7 +7,8 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @TestPropertySource(properties = {
     "openai.api-key=test-key",
-    "spring.data.mongodb.uri=mongodb://localhost:27017/test"
+    "spring.data.mongodb.uri=mongodb://localhost:27017/test",
+    "forum.service.base-url=http://localhost:9999"
 })
 class ChatbotServiceApplicationTests {
 
